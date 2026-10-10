@@ -1,0 +1,33 @@
+# WorkBuddy 本地工作数据（含 AI 记忆日志）
+.workbuddy/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# 训练产物（体积大、可复现，不入库）
+checkpoints/
+runs/
+logs/
+*.pt
+*.pth
+*.ckpt
+
+# 数据集与词表（可从脚本重新下载生成）
+data/
+.vector_cache/
+*.bin
+*.pkl
