@@ -1,7 +1,8 @@
 import torch
 from torch.utils.data import Dataset
-
-from utils.vocab import tokenize, BOS_IDX, EOS_IDX
+import torch.nn.functional as F
+from torch.nn.utils.rnn import pad_sequence
+from utils.vocab import tokenize, BOS_IDX, EOS_IDX, PAD_IDX
 
 
 class Multi30kDataset(Dataset):
@@ -31,5 +32,36 @@ class Multi30kDataset(Dataset):
         # 解包data
         src_ids, trg_ids = self.data[idx]
         return torch.tensor(src_ids, dtype=torch.long), torch.tensor(trg_ids, dtype=torch.long)
+
+def collate_fn(batch):
+    """把一批长短不齐的 (src, trg) 对，补 pad 后堆成两个矩形张量。"""
+
+    # ① 拆两摞：batch 的每个元素是元组 (src, trg)，pair[0] 是 src，pair[1] 是 trg
+    srcs, trgs = zip(*batch)
+    # ② 堆成矩形pad_sequence 专为长短不齐设计
+    src_batch = pad_sequence(srcs, batch_first=True, padding_value=PAD_IDX)
+    trg_batch = pad_sequence(trgs, batch_first=True, padding_value=PAD_IDX)
+
+    #第二种方法
+    # # ② 找到最长的 src 和最长的 trg
+    # max_len_src = max(len(src) for src in srcs)
+    # max_len_trg = max(len(trg) for trg in trgs)
+
+    # # ③ 逐条补 pad：F.pad(张量, (前面补几个, 后面补几个), value=填充值)
+    # #    "后面补几个" = 目标长度 - 当前长度，动态计算
+    # padded_srcs = [F.pad(t, (0, max_len_src - t.size(0)), value=PAD_IDX) for t in srcs]
+    # padded_trgs = [F.pad(t, (0, max_len_trg - t.size(0)), value=PAD_IDX) for t in trgs]
+
+    # # ④ 堆成矩形：torch.stack 要求列表里所有张量形状相同
+    # src_batch = torch.stack(padded_srcs)               # 参照行
+    # trg_batch = torch.stack(padded_trgs)               # 参照列
+
+    return src_batch, trg_batch
+
+
+
+
+
+
         
         
