@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 
 class PositionalEncoding(nn.Module):
-    """位置编码：sin/cos，与词向量拼接。"""
+    """位置编码：sin/cos，与词向量相加。"""
     def __init__(self, d_model, max_len, dropout):
         super().__init__()
         self.dropout = nn.Dropout(p=dropout)
