@@ -10,6 +10,10 @@ from utils.mask import make_src_mask, make_trg_mask
 from models.transformer import Transformer
 from configs.config import *
 
+#可视化进度依赖
+import time
+from tqdm import tqdm
+
 def plot_loss_curve(train_losses, val_losses):
     """训练结束自动画出 train/val 双曲线并保存。"""
     epochs = range(1, len(train_losses) + 1)
@@ -62,9 +66,16 @@ def train():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
+
+    train_start =time.time()#记录训练开始时间
+
     for epoch in range(EPOCHS):
+        epoch_start = time.time()#记录每个epoch开始时间
+        print(f"\n[{time.strftime('%H:%M:%S')}] ── Epoch {epoch+1}/{EPOCHS} 开始 ──")#打印当前时间
+        pbar = tqdm(train_loader, desc=f"Epoch {epoch+1}/{EPOCHS}")   # 空⑤：包进度条
+
         total_loss = 0
-        for src_batch, trg_batch in train_loader:
+        for src_batch, trg_batch in pbar:
             src_batch, trg_batch = src_batch.to(device), trg_batch.to(device)
 
             optimizer.zero_grad()  #标准5步：1.清零梯度 2.前向传播 3.计算损失 4.反向传播 5.优化器更新
@@ -84,11 +95,15 @@ def train():
             loss.backward()
             # TODO 9：优化器更新
             optimizer.step()
+
+            pbar.set_postfix(loss=f"{loss.item():.3f}") #空⑥：进度条显示 loss
             # TODO 10：记录损失
             total_loss += loss.item()
         # TODO 11：打印损失
+        epoch_time = time.time() - epoch_start
         train_losses.append(total_loss / len(train_loader))
-        print(f"Epoch {epoch+1} | 平均 loss: {train_losses[-1]:.4f}")
+        print(f"[{time.strftime('%H:%M:%S')}] Epoch {epoch+1}/{EPOCHS} 结束 | "
+              f"平均train loss: {train_losses[-1]:.4f} | 耗时 {epoch_time:.1f}s")
 
         #验证
 
@@ -127,7 +142,7 @@ def train():
         json.dump({"train": train_losses, "val": val_losses}, f)
     print("loss 历史已保存: checkpoints/loss_history.json")
     plot_loss_curve(train_losses, val_losses)
-
+    print(f"\n总训练耗时: {(time.time() - train_start) / 60:.1f} 分钟")
 
 if __name__ == "__main__":
     train()
