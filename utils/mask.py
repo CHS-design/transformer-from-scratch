@@ -16,7 +16,7 @@ def make_trg_mask(trg):
     # 空 2：未来挡板——用 torch.ones(S, S, dtype=torch.bool) 造全 True 方阵，
     #        再 torch.tril 取下三角，S = trg.shape[1]
     S = trg.shape[1]
-    mask_2 = torch.ones(S, S, dtype=torch.bool).tril()
+    mask_2 = torch.tril(torch.ones(S, S, dtype=torch.bool, device=trg.device))
     # 空 3：合并——trg_pad_mask 先 unsqueeze(1).unsqueeze(2)，再 & 未来挡板
     #        （想想谁广播谁：4 维 & 2 维，结果什么形状？）
     trg_mask = trg_pad_mask.unsqueeze(1).unsqueeze(2) & mask_2
