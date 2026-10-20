@@ -9,7 +9,7 @@ from utils.data import Multi30kDataset, collate_fn
 from utils.mask import make_src_mask, make_trg_mask
 from models.transformer import Transformer
 from configs.config import *
-
+import os
 #可视化进度依赖
 import time
 from tqdm import tqdm
@@ -27,12 +27,14 @@ def plot_loss_curve(train_losses, val_losses):
     plt.legend()
     plt.grid(alpha=0.3)
     plt.tight_layout()
-    plt.savefig("checkpoints/loss_curve.png", dpi=150)
+    plt.savefig(f"checkpoints/{RUN_NAME}/loss_curve.png", dpi=150)
     plt.close()
     print("loss 曲线已保存: checkpoints/loss_curve.png")
 
 
 def train():
+    RUN_DIR = f"checkpoints/{RUN_NAME}"
+    os.makedirs(RUN_DIR, exist_ok=True)    # 目录不存在就建；已存在则静默通过
     # TODO 1：读词表
     src_vocab = Vocab.load("vocab/vocab.en.json")
     trg_vocab = Vocab.load("vocab/vocab.de.json")
@@ -129,7 +131,7 @@ def train():
         if val_loss<best_loss:
             best_loss = val_loss
             early_stop_count = 0
-            torch.save(model.state_dict(), "checkpoints/best.pt")
+            torch.save(model.state_dict(), f"{RUN_DIR}/best.pt")
         else:
             early_stop_count += 1
 
@@ -138,7 +140,7 @@ def train():
             break
 
     # 训练结束：保存 loss 历史供可视化
-    with open("checkpoints/loss_history.json", "w", encoding="utf-8") as f:
+    with open(f"{RUN_DIR}/loss_history.json", "w", encoding="utf-8") as f:
         json.dump({"train": train_losses, "val": val_losses}, f)
     print("loss 历史已保存: checkpoints/loss_history.json")
     plot_loss_curve(train_losses, val_losses)
