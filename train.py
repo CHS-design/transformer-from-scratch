@@ -42,6 +42,7 @@ def train():
 
     best_loss = float("inf")
     train_losses, val_losses = [], []      # 每个 epoch 的 loss 历史（供可视化）
+    early_stop_count = 0
     # TODO 3：加载模型
     model = Transformer(src_vocab_size=len(src_vocab),
                         trg_vocab_size=len(trg_vocab),
@@ -112,7 +113,14 @@ def train():
         # TODO 12：保存模型
         if val_loss<best_loss:
             best_loss = val_loss
+            early_stop_count = 0
             torch.save(model.state_dict(), "checkpoints/best.pt")
+        else:
+            early_stop_count += 1
+
+        if early_stop_count >= PATIENCE:
+            print(f"早停触发：验证 loss 连续 {PATIENCE} 轮无改善，停止训练")
+            break
 
     # 训练结束：保存 loss 历史供可视化
     with open("checkpoints/loss_history.json", "w", encoding="utf-8") as f:
