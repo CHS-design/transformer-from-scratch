@@ -1,5 +1,6 @@
 import json
 
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -8,6 +9,24 @@ from utils.data import Multi30kDataset, collate_fn
 from utils.mask import make_src_mask, make_trg_mask
 from models.transformer import Transformer
 from configs.config import *
+
+def plot_loss_curve(train_losses, val_losses):
+    """训练结束自动画出 train/val 双曲线并保存。"""
+    epochs = range(1, len(train_losses) + 1)
+    plt.figure(figsize=(8, 5))
+    plt.plot(epochs, train_losses, marker="o", markersize=3, label="train loss")
+    plt.plot(epochs, val_losses, marker="s", markersize=3, label="val loss")
+    plt.axhline(y=8.97, color="gray", linestyle="--", linewidth=1, label="random guess (ln 7882)")
+    plt.xlabel("Epoch")
+    plt.ylabel("CrossEntropy Loss")
+    plt.title("Transformer Training Curve (Multi30k en->de)")
+    plt.legend()
+    plt.grid(alpha=0.3)
+    plt.tight_layout()
+    plt.savefig("checkpoints/loss_curve.png", dpi=150)
+    plt.close()
+    print("loss 曲线已保存: checkpoints/loss_curve.png")
+
 
 def train():
     # TODO 1：读词表
@@ -99,6 +118,7 @@ def train():
     with open("checkpoints/loss_history.json", "w", encoding="utf-8") as f:
         json.dump({"train": train_losses, "val": val_losses}, f)
     print("loss 历史已保存: checkpoints/loss_history.json")
+    plot_loss_curve(train_losses, val_losses)
 
 
 if __name__ == "__main__":
